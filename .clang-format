@@ -1,0 +1,31 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+
+AllowAllArgumentsOnNextLine: false
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignOperands: Align
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseExpressionOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortCompoundRequirementOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: true
+# BinPackParameters: OnePerLine
+BreakAfterOpenBracketFunction: false
+BreakAfterReturnType: Automatic
+BreakBeforeBinaryOperators: NonAssignment
+# BreakBinaryOperations:
+#   Default: OnePerLine
+IndentCaseBlocks: true
+IndentCaseLabels: true
+PackArguments:
+  BinPack: OnePerLine
+PackParameters:
+  BinPack: OnePerLine
+
+PenaltyReturnTypeOnItsOwnLine: 1000
