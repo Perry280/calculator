@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
+#include "utils.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,48 +25,6 @@ char *concat_input_expression(int argc, char *argv[]) {
     return input;
 }
 
-void print_tokens(gvec_t *tokens) {
-    if (tokens == NULL)
-        return;
-
-    token_t *arr = (token_t *)(tokens->array);
-    printf("Tokens:");
-    for (size_t i = 0; i < tokens->size; i++) {
-        switch (arr[i].type) {
-            case TT_INVALID:
-                printf(" Invalid");
-                break;
-            case TT_OPEN_PARENTHESIS:
-                printf(" (");
-                break;
-            case TT_CLOSED_PARENTHESIS:
-                printf(" )");
-                break;
-            case TT_ADDITION:
-                printf(" +");
-                break;
-            case TT_SUBTRACTION:
-                printf(" -");
-                break;
-            case TT_MULTIPLICATION:
-                printf(" *");
-                break;
-            case TT_DIVISION:
-                printf(" /");
-                break;
-            case TT_POWER:
-                printf(" ^");
-                break;
-            case TT_NUMBER:
-                printf(" %g", arr[i].word);
-                break;
-            case TT_EOI:
-                break;
-        }
-    }
-    printf("\n");
-}
-
 int main(int argc, char *argv[]) {
     if (argc <= 1) {
         fprintf(stderr, "String to evaluate not found.\n");
@@ -76,15 +35,23 @@ int main(int argc, char *argv[]) {
     printf("Input: %s\n", input);
 
     gvec_t *tokens = NULL;
+    char *msg = NULL;
+    char *tokens_str = NULL;
     switch (tokenize(input, &tokens)) {
         case L_OK:
-            print_tokens(tokens);
-            switch (recursive_descent_parser(tokens)) {
+            tokens_str = tokens_to_string(tokens, 1);
+            printf("Tokens: %s\n", tokens_str);
+            free(tokens_str);
+            tokens_str = NULL;
+            switch (recursive_descent_parser(tokens, &msg)) {
                 case P_OK:
                     printf("Valid syntax.\n");
                     break;
                 case P_ENOMEM:
                     fprintf(stderr, "malloc falied.\n");
+                    break;
+                case P_EINVAL:
+                    fprintf(stderr, "Invalid argument.\n");
                     break;
                 case P_SYNERR:
                     fprintf(stderr, "Syntax error.\n");

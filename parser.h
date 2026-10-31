@@ -5,7 +5,8 @@
 
 #define P_OK     0
 #define P_ENOMEM -1
-#define P_SYNERR -2
+#define P_EINVAL -2
+#define P_SYNERR -3
 
 /*
  * n: number
@@ -81,7 +82,7 @@
  * AUGMENTED_FIRST('X -> n')        = { 'n' }
  */
 
-int recursive_descent_parser(const gvec_t *tokens);
+int recursive_descent_parser(const gvec_t *tokens, char **msg);
 
 /*
  * LL(1) table

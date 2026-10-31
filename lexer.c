@@ -34,7 +34,7 @@ static token_type_t symbol_accept(char c) {
         case '(':
             return TT_OPEN_PARENTHESIS;
         case ')':
-            return TT_CLOSED_PARENTHESIS;
+            return TT_CLOSE_PARENTHESIS;
         case '+':
             return TT_ADDITION;
         case '-':

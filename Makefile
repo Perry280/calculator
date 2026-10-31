@@ -3,7 +3,7 @@ CFLAGS = -g -fsanitize=address,undefined -Wall -Wextra -Wpedantic -Werror
 DEPFLAGS = -MMD -MP
 
 BINS = main
-SRCS = lexer.c parser.c main.c generic_data_structures/generic_vector/generic_vector.c
+SRCS = lexer.c parser.c utils.c main.c generic_data_structures/generic_vector/generic_vector.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(OBJS:.o=.d)
 
