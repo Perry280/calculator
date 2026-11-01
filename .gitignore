@@ -1,4 +1,8 @@
 *.o
 *.d
+*.so
+.objs
+.deps
+.shared_objs
 generic_data_structures
 main
