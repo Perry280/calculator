@@ -29,11 +29,11 @@ static int rd_D1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
 static int rd_X(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
 
 int recursive_descent_parser(const gvec_t *tokens, char **msg) {
-    if (tokens == NULL || tokens->size == 0 || msg == NULL)
+    if (tokens == NULL || gvec_size(tokens) == 0 || msg == NULL)
         return P_EINVAL;
 
-    if (tokens->size == 1
-        && ((token_t *)GVEC_PTR_AT(tokens, 0))->type == TT_EOI)
+    if (gvec_size(tokens) == 1
+        && ((token_t *)gvec_ptr_at(tokens, 0))->type == TT_EOI)
         return P_OK;
 
     gvec_iter_t *iter = gvec_iter_create(tokens);

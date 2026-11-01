@@ -14,15 +14,16 @@ static void strcat_double(char *restrict dest, double n) {
 }
 
 char *tokens_to_string(const gvec_t *tokens, int include_eoi) {
-    if (tokens == NULL || tokens->size == 0
-        || (!include_eoi && tokens->size == 1
-            && ((token_t *)GVEC_PTR_AT(tokens, 0))->type == TT_EOI))
+    if (tokens == NULL || gvec_size(tokens) == 0
+        || (!include_eoi && gvec_size(tokens) == 1
+            && ((token_t *)gvec_ptr_at(tokens, 0))->type == TT_EOI))
         return NULL;
 
     size_t string_size = 0;
     int eoi_in_tokens = 0;
-    const token_t *const arr = (token_t *)(tokens->array);
-    for (size_t i = 0; i < tokens->size; i++) {
+    const size_t size = gvec_size(tokens);
+    const token_t *const arr = (const token_t *)gvec_array(tokens);
+    for (size_t i = 0; i < size; i++) {
         switch (arr[i].type) {
             case TT_INVALID:
                 string_size += strlen("INVALID");
@@ -41,13 +42,13 @@ char *tokens_to_string(const gvec_t *tokens, int include_eoi) {
     }
 
     // Add enough space for white spaces between the tokens
-    string_size += tokens->size - eoi_in_tokens * (include_eoi == 0) * 2;
+    string_size += size - eoi_in_tokens * (include_eoi == 0) * 2;
 
     printf("len: %zu\n", string_size);
 
     char *const string = calloc(string_size, sizeof(char));
 
-    for (size_t i = 0; i < tokens->size; i++) {
+    for (size_t i = 0; i < size; i++) {
         switch (arr[i].type) {
             case TT_INVALID:
                 strcat(string, "INVALID");
@@ -82,7 +83,7 @@ char *tokens_to_string(const gvec_t *tokens, int include_eoi) {
                 break;
         }
 
-        if (i < tokens->size - 1)
+        if (i < size - 1)
             strcat(string, " ");
     }
 

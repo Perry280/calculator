@@ -21,7 +21,7 @@
     case '9'
 
 int token_type_cmp(const void *a, const void *b) {
-    return ((const token_t *)a)->type != ((const token_t *)b)->type;
+    return ((const token_t *)a)->type - ((const token_t *)b)->type;
 }
 
 static int push_number(gvec_t *tokens, const char *input, size_t offset) {
