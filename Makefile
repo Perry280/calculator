@@ -1,5 +1,5 @@
 CC       := gcc
-CFLAGS   := -g -fsanitize=address,undefined -Wall -Wextra -Wpedantic -Werror
+CFLAGS   := -g -fsanitize=address,undefined -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion
 DEPFLAGS := -MMD -MP
 
 OBJS_DIR := .objs
