@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "types.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>

@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include "generic_data_structures/generic_vector/generic_vector.h"
+#include "types.h"
 
 #define P_OK     0
 #define P_ENOMEM -1
