@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define INVALID_CHAR_ERR       "Invalid character."
+#define NO_NUM_AFTER_POINT_ERR "Number expected after point."
+#define UNEXPECTED_POINT_ERR   "Unexpected point."
+
 #define INVALID_CHAR(c)                                                        \
     (c) != '(' && (c) != ')' && (c) != '+' && (c) != '-' && (c) != '*'         \
         && (c) != '^' && (c) != '/' && (c) != '.' && (c) != ' '                \
@@ -22,11 +26,17 @@
     case '9'
 
 int token_type_cmp(const void *a, const void *b) {
-    return ((const token_t *)a)->type - ((const token_t *)b)->type;
+    return (int)(((const token_t *)a)->type - ((const token_t *)b)->type);
 }
 
-static int push_number(gvec_t *tokens, const char *input, size_t offset) {
-    token_t token = {.type = TT_NUMBER, .word = strtod(input + offset, NULL)};
+static int push_number(gvec_t *tokens,
+                       const char *input,
+                       size_t offset,
+                       size_t word_end) {
+    const token_t token = {
+        .type = TT_NUMBER,
+        .word = strtod(input + offset, NULL),
+        .loc = {.index = offset, .length = word_end - offset}};
     return gvec_push_back(tokens, &token);
 }
 
@@ -53,8 +63,14 @@ static token_type_t symbol_accept(char c) {
     return TT_INVALID;
 }
 
-int tokenize(const char *input, gvec_t **tokens) {
-    if (input == NULL || strlen(input) == 0)
+static inline void set_err(err_msg_t *err, const char *err_msg, size_t index) {
+    err->msg = err_msg;
+    err->loc.index = index;
+    err->loc.length = 1;
+}
+
+int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
+    if (input == NULL || strlen(input) == 0 || err == NULL)
         return L_EINVAL;
 
     gvec_t *t = gvec_create(sizeof(token_t), token_type_cmp, NULL);
@@ -68,14 +84,16 @@ int tokenize(const char *input, gvec_t **tokens) {
         I_AFTER_POINT
     } state = I_SYMBOLS;
 
-    size_t input_len = strlen(input);
+    const size_t input_len = strlen(input);
     int status = L_OK;
     size_t offset = 0;
+
     for (size_t i = 0; i < input_len; i++) {
         const char c = input[i];
         token_t token = {0};
 
         if (INVALID_CHAR(c)) {
+            set_err(err, INVALID_CHAR_ERR, i);
             status = L_ERROR;
             break;
         }
@@ -104,6 +122,7 @@ int tokenize(const char *input, gvec_t **tokens) {
                         break;
                     // clang-format on
                     default:
+                        set_err(err, NO_NUM_AFTER_POINT_ERR, i);
                         status = L_ERROR;
                         break;
                 }
@@ -114,13 +133,15 @@ int tokenize(const char *input, gvec_t **tokens) {
                     case '.':
                         if (state == I_NUMBER)
                             state = I_AFTER_POINT;
-                        else
+                        else {
+                            set_err(err, UNEXPECTED_POINT_ERR, i);
                             status = L_ERROR;
+                        }
                         break;
                     CASE_DIGITS:
                         break;
                     default:
-                        if (push_number(t, input, offset) == GVEC_ENOMEM) {
+                        if (push_number(t, input, offset, i) == GVEC_ENOMEM) {
                             status = L_ENOMEM;
                             break;
                         }
@@ -135,22 +156,29 @@ int tokenize(const char *input, gvec_t **tokens) {
         if (status != L_OK)
             break;
 
-        if (token.type != TT_INVALID
-            && gvec_push_back(t, &token) == GVEC_ENOMEM) {
-            status = L_ENOMEM;
-            break;
+        if (token.type != TT_INVALID) {
+            token.loc.index = i;
+            token.loc.length = 1;
+            if (gvec_push_back(t, &token) == GVEC_ENOMEM) {
+                status = L_ENOMEM;
+                break;
+            }
         }
     }
 
-    if (state == I_POINT)
+    if (state == I_POINT) {
+        set_err(err, NO_NUM_AFTER_POINT_ERR, input_len);
         status = L_ERROR;
+    }
 
     if (status == L_OK) {
         if ((state == I_NUMBER || state == I_AFTER_POINT)
-            && push_number(t, input, offset) == GVEC_ENOMEM)
+            && push_number(t, input, offset, strlen(input)) == GVEC_ENOMEM)
             status = L_ENOMEM;
 
-        token_t token = {.type = TT_EOI, .word = 0};
+        const token_t token = {.type = TT_EOI,
+                               .word = 0,
+                               .loc = {.index = strlen(input), .length = 1}};
         if (status != L_ENOMEM && gvec_push_back(t, &token) == GVEC_ENOMEM)
             status = L_ENOMEM;
 

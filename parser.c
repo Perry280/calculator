@@ -1,35 +1,38 @@
 #include "parser.h"
-#include "lexer.h"
-#include <stddef.h>
-#include <stdio.h>
 
-enum non_terminals {
-    NT_A,
-    NT_B0,
-    NT_B1,
-    NT_C0,
-    NT_C1,
-    NT_D0,
-    NT_D1,
-    NT_X
-};
+#define SYMBOL_ERR     "Symbol expected."
+#define OPERAND_ERR    "Operand expected."
+#define UNEXPECTED_ERR "Unexpected symbol."
+#define A_ERR          "Operand, + or - expected."
+#define B1_ERR         "Close paren, + or - expected."
+#define C1_ERR         "Close paren, +, -, *, or / expected."
+#define D1_ERR         "Close paren or operator expected."
+#define X_ERR          "Close paren expected."
 
-typedef struct err_msg_s {
-    char *msg;
-    size_t index; /**< Index of the token that caused the error. */
-} err_msg_t;
+static int rd_A(gvec_iter_t *iter, token_t *token, err_msg_t *err);
+static int rd_B0(gvec_iter_t *iter, token_t *token, err_msg_t *err);
+static int rd_B1(gvec_iter_t *iter, token_t *token, err_msg_t *err);
+static int rd_C0(gvec_iter_t *iter, token_t *token, err_msg_t *err);
+static int rd_C1(gvec_iter_t *iter, token_t *token, err_msg_t *err);
+static int rd_D0(gvec_iter_t *iter, token_t *token, err_msg_t *err);
+static int rd_D1(gvec_iter_t *iter, token_t *token, err_msg_t *err);
+static int rd_X(gvec_iter_t *iter, token_t *token, err_msg_t *err);
 
-static int rd_A(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
-static int rd_B0(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
-static int rd_B1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
-static int rd_C0(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
-static int rd_C1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
-static int rd_D0(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
-static int rd_D1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
-static int rd_X(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg);
+static inline void set_err(err_msg_t *err,
+                           const char *err_msg,
+                           location_t location) {
+    err->msg = err_msg;
+    err->loc = location;
+}
 
-int recursive_descent_parser(const gvec_t *tokens, char **msg) {
-    if (tokens == NULL || gvec_size(tokens) == 0 || msg == NULL)
+static inline void set_err_eoi(err_msg_t *err, location_t last_location) {
+    const location_t eoi = {.index = last_location.index + last_location.length,
+                            .length = 1};
+    set_err(err, SYMBOL_ERR, eoi);
+}
+
+int recursive_descent_parser(const gvec_t *tokens, err_msg_t *err) {
+    if (tokens == NULL || gvec_size(tokens) == 0 || err == NULL)
         return P_EINVAL;
 
     if (gvec_size(tokens) == 1
@@ -40,130 +43,120 @@ int recursive_descent_parser(const gvec_t *tokens, char **msg) {
     if (iter == NULL)
         return P_ENOMEM;
 
-    err_msg_t err_msg = {0};
     token_t token = {0};
     gvec_iter_next(iter, &token);
 
-    int res = rd_A(iter, &token, &err_msg);
-
+    int res = rd_A(iter, &token, err);
     if (res == P_OK && token.type != TT_EOI) {
-        err_msg.msg = "Unexpected symbol.";
+        set_err(err, UNEXPECTED_ERR, token.loc);
         res = P_SYNERR;
-    }
-
-    if (res == P_SYNERR) {
-        // TODO
     }
 
     gvec_iter_free(iter);
     return res;
 }
 
-static int rd_A(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_A(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_ADDITION:
         case TT_SUBTRACTION:
-            err_msg->index++;
             if (gvec_iter_next(iter, token) == GVEC_EITER) {
-                err_msg->msg = "Symbol expected.";
+                set_err_eoi(err, token->loc);
                 return P_SYNERR;
             }
 
             // fallthrough
         case TT_OPEN_PARENTHESIS:
         case TT_NUMBER:
-            return rd_B0(iter, token, err_msg);
+            return rd_B0(iter, token, err);
         default:
-            err_msg->msg = "Operand, + or - expected.";
+            set_err(err, A_ERR, token->loc);
             return P_SYNERR;
     }
 }
 
-static int rd_B0(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_B0(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_OPEN_PARENTHESIS:
         case TT_NUMBER:
-            return rd_C0(iter, token, err_msg) && rd_B1(iter, token, err_msg);
+            return rd_C0(iter, token, err) && rd_B1(iter, token, err);
         default:
-            err_msg->msg = "Operand expected.";
+            set_err(err, OPERAND_ERR, token->loc);
             return P_SYNERR;
     }
 }
 
-static int rd_B1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_B1(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_ADDITION:
         case TT_SUBTRACTION:
-            err_msg->index++;
             if (gvec_iter_next(iter, token) == GVEC_EITER) {
-                err_msg->msg = "Symbol expected.";
+                set_err_eoi(err, token->loc);
                 return P_SYNERR;
             }
 
-            return rd_C0(iter, token, err_msg) && rd_B1(iter, token, err_msg);
+            return rd_C0(iter, token, err) && rd_B1(iter, token, err);
         case TT_CLOSE_PARENTHESIS:
         case TT_EOI:
             return P_OK;
         default:
-            err_msg->msg = "Close paren, + or - expected.";
+            set_err(err, B1_ERR, token->loc);
             return P_SYNERR;
     }
 }
 
-static int rd_C0(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_C0(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_OPEN_PARENTHESIS:
         case TT_NUMBER:
-            return rd_D0(iter, token, err_msg) && rd_C1(iter, token, err_msg);
+            return rd_D0(iter, token, err) && rd_C1(iter, token, err);
         default:
-            err_msg->msg = "Operand expected.";
+            set_err(err, OPERAND_ERR, token->loc);
             return P_SYNERR;
     }
 }
 
-static int rd_C1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_C1(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_MULTIPLICATION:
         case TT_DIVISION:
-            err_msg->index++;
             if (gvec_iter_next(iter, token) == GVEC_EITER) {
-                err_msg->msg = "Symbol expected.";
+                set_err_eoi(err, token->loc);
                 return P_SYNERR;
             }
 
-            return rd_D0(iter, token, err_msg) && rd_C1(iter, token, err_msg);
+            return rd_D0(iter, token, err) && rd_C1(iter, token, err);
         case TT_CLOSE_PARENTHESIS:
         case TT_ADDITION:
         case TT_SUBTRACTION:
         case TT_EOI:
             return P_OK;
         default:
-            err_msg->msg = "Close paren, +, -, *, or / expected.";
+            set_err(err, C1_ERR, token->loc);
             return P_SYNERR;
     }
 }
 
-static int rd_D0(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_D0(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_OPEN_PARENTHESIS:
         case TT_NUMBER:
-            return rd_X(iter, token, err_msg) && rd_D1(iter, token, err_msg);
+            return rd_X(iter, token, err) && rd_D1(iter, token, err);
         default:
-            err_msg->msg = "Operand expected.";
+            set_err(err, OPERAND_ERR, token->loc);
             return P_SYNERR;
     }
 }
 
-static int rd_D1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_D1(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_POWER:
-            err_msg->index++;
             if (gvec_iter_next(iter, token) == GVEC_EITER) {
-                err_msg->msg = "Symbol expected.";
+                set_err_eoi(err, token->loc);
                 return P_SYNERR;
             }
 
-            return rd_D0(iter, token, err_msg);
+            return rd_D0(iter, token, err);
         case TT_CLOSE_PARENTHESIS:
         case TT_ADDITION:
         case TT_SUBTRACTION:
@@ -172,36 +165,34 @@ static int rd_D1(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
         case TT_EOI:
             return P_OK;
         default:
-            err_msg->msg = "Close paren or operator expected.";
+            set_err(err, D1_ERR, token->loc);
             return P_SYNERR;
     }
 }
 
-static int rd_X(gvec_iter_t *iter, token_t *token, err_msg_t *err_msg) {
+static int rd_X(gvec_iter_t *iter, token_t *token, err_msg_t *err) {
     switch (token->type) {
         case TT_OPEN_PARENTHESIS:
-            err_msg->index++;
             if (gvec_iter_next(iter, token) == GVEC_EITER) {
-                err_msg->msg = "Symbol expected.";
+                set_err_eoi(err, token->loc);
                 return P_SYNERR;
             }
 
-            if (!rd_A(iter, token, err_msg)
+            if (!rd_A(iter, token, err)
                 && token->type != TT_CLOSE_PARENTHESIS) {
-                err_msg->msg = "Close paren expected.";
+                set_err(err, X_ERR, token->loc);
                 return P_SYNERR;
             }
 
             // fallthrough
         case TT_NUMBER:
-            err_msg->index++;
             if (gvec_iter_next(iter, token) == GVEC_EITER) {
-                err_msg->msg = "Symbol expected.";
+                set_err_eoi(err, token->loc);
                 return P_SYNERR;
             }
             return P_OK;
         default:
-            err_msg->msg = "Operand expected.";
+            set_err(err, OPERAND_ERR, token->loc);
             return P_SYNERR;
     }
 }

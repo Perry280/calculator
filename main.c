@@ -36,15 +36,17 @@ int main(int argc, char *argv[]) {
     printf("Input: %s\n", input);
 
     gvec_t *tokens = NULL;
-    char *msg = NULL;
-    char *tokens_str = NULL;
-    switch (tokenize(input, &tokens)) {
+    err_msg_t err = {0};
+    char *aux = NULL;
+
+    switch (tokenize(input, &tokens, &err)) {
         case L_OK:
-            tokens_str = tokens_to_string(tokens, 1);
-            printf("Tokens: %s\n", tokens_str);
-            free(tokens_str);
-            tokens_str = NULL;
-            switch (recursive_descent_parser(tokens, &msg)) {
+            aux = tokens_to_string(tokens, 1);
+            printf("Tokens: %s\n", aux);
+            free(aux);
+            aux = NULL;
+
+            switch (recursive_descent_parser(tokens, &err)) {
                 case P_OK:
                     printf("Valid syntax.\n");
                     break;
@@ -55,7 +57,10 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "Invalid argument.\n");
                     break;
                 case P_SYNERR:
-                    fprintf(stderr, "Syntax error.\n");
+                    aux = format_err_msg(input, err);
+                    fprintf(stderr, "%s\n", aux);
+                    free(aux);
+                    aux = NULL;
                     break;
             }
             break;
@@ -66,7 +71,10 @@ int main(int argc, char *argv[]) {
             fprintf(stderr, "malloc failed.\n");
             break;
         case L_ERROR:
-            fprintf(stderr, "Invalid input.\n");
+            aux = format_err_msg(input, err);
+            fprintf(stderr, "%s\n", aux);
+            free(aux);
+            aux = NULL;
             break;
     }
 

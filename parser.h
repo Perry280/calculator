@@ -83,7 +83,7 @@
  * AUGMENTED_FIRST('X -> n')        = { 'n' }
  */
 
-int recursive_descent_parser(const gvec_t *tokens, char **msg);
+int recursive_descent_parser(const gvec_t *tokens, err_msg_t *err);
 
 /*
  * LL(1) table
