@@ -1,4 +1,4 @@
 CompileFlags:
-    Add: [-xc]
+    Add: [--std=gnu23, -xc, -Wall, -Wextra, -Wpedantic, -Wshadow, -Wconversion]
 Documentation:
     CommentFormat: Doxygen
