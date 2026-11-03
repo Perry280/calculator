@@ -1,4 +1,4 @@
 CompileFlags:
-    Add: [--std=gnu23, -xc, -Wall, -Wextra, -Wpedantic, -Wshadow, -Wconversion]
+    Add: [--std=gnu23, -xc, -Wall, -Wextra, -Wpedantic, -Wshadow, -Wconversion, -Ilib/generic_data_structures/generic_vector]
 Documentation:
     CommentFormat: Doxygen

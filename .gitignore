@@ -2,5 +2,4 @@
 *.d
 .objs
 .deps
-generic_data_structures
 main

@@ -1,0 +1,3 @@
+[submodule "lib/generic_data_structures"]
+	path = lib/generic_data_structures
+	url = https://github.com/Perry280/generic_data_structures.git

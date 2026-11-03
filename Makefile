@@ -6,7 +6,7 @@ OBJS_DIR := .objs
 DEPS_DIR := .deps
 
 LIBS     := generic_vector.c
-LIBS_DIR := ./generic_data_structures/generic_vector
+LIBS_DIR := ./lib/generic_data_structures/generic_vector
 
 BINS := main
 SRCS := lexer.c parser.c utils.c main.c $(LIBS)
@@ -23,7 +23,7 @@ $(BINS): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $@
 
 $(OBJS_DIR)/%.o: %.c | $(OBJS_DIR) $(DEPS_DIR)
-	$(CC) $(CFLAGS) $(DEPFLAGS) -MF $(DEPS_DIR)/$*.d -c $< -o $@
+	$(CC) $(CFLAGS) -I$(LIBS_DIR) $(DEPFLAGS) -MF $(DEPS_DIR)/$*.d -c $< -o $@
 
 $(OBJS_DIR) $(DEPS_DIR):
 	mkdir -p $@

@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "generic_data_structures/generic_vector/generic_vector.h"
+#include "generic_vector.h"
 #include "types.h"
 
 #define L_OK     0
