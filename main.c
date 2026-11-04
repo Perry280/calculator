@@ -50,29 +50,29 @@ int main(int argc, char *argv[]) {
                 case P_OK:
                     printf("Valid syntax.\n");
                     break;
-                case P_ENOMEM:
-                    fprintf(stderr, "malloc falied.\n");
-                    break;
                 case P_EINVAL:
-                    fprintf(stderr, "Invalid argument.\n");
+                    fprintf(stderr, "ERROR: Invalid argument.\n");
+                    break;
+                case P_ENOMEM:
+                    fprintf(stderr, "ERROR: malloc failed.\n");
                     break;
                 case P_SYNERR:
                     aux = format_err_msg(input, err);
-                    fprintf(stderr, "%s\n", aux);
+                    fprintf(stderr, "\n%s\n\n", aux);
                     free(aux);
                     aux = NULL;
                     break;
             }
             break;
         case L_EINVAL:
-            fprintf(stderr, "Empty input.\n");
+            fprintf(stderr, "ERROR: Empty input.\n");
             break;
         case L_ENOMEM:
-            fprintf(stderr, "malloc failed.\n");
+            fprintf(stderr, "ERROR: malloc failed.\n");
             break;
         case L_ERROR:
             aux = format_err_msg(input, err);
-            fprintf(stderr, "%s\n", aux);
+            fprintf(stderr, "\n%s\n\n", aux);
             free(aux);
             aux = NULL;
             break;
