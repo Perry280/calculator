@@ -36,7 +36,7 @@ static inline parsing_result_t set_syn_err_eoi(location_t last_location) {
     return set_syn_err(SYMBOL_ERR, eoi);
 }
 
-static inline parsing_result_t set_success() {
+static inline parsing_result_t set_success(void) {
     const parsing_result_t res = {.ret_code = P_OK, .err = {0}};
     return res;
 }

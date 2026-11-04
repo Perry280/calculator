@@ -8,8 +8,8 @@ DEPS_DIR := .deps
 LIBS     := generic_vector.c
 LIBS_DIR := ./lib/generic_data_structures/generic_vector
 
-BINS := main
-SRCS := lexer.c parser.c utils.c main.c $(LIBS)
+BINS := calculator
+SRCS := lexer.c parser.c utils.c $(BINS).c $(LIBS)
 OBJS := $(addprefix $(OBJS_DIR)/, $(SRCS:.c=.o))
 DEPS := $(addprefix $(DEPS_DIR)/, $(SRCS:.c=.d))
 
