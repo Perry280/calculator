@@ -166,26 +166,28 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
         }
     }
 
-    if (state == I_POINT) {
-        set_err(err, NO_NUM_AFTER_POINT_ERR, input_len);
-        ret_code = L_ERROR;
-    }
-
     if (ret_code == L_OK) {
-        if ((state == I_NUMBER || state == I_AFTER_POINT)
-            && push_number(t, input, offset, input_len) == GVEC_ENOMEM)
+        // Point cannot be last symbol
+        if (state == I_POINT) {
+            set_err(err, NO_NUM_AFTER_POINT_ERR, input_len);
+            ret_code = L_ERROR;
+        } else if ((state == I_NUMBER || state == I_AFTER_POINT)
+                   && push_number(t, input, offset, input_len) == GVEC_ENOMEM)
             ret_code = L_ENOMEM;
 
-        const token_t token = {.type = TT_EOI,
-                               .word = 0,
-                               .loc = {.index = input_len, .length = 1}};
-        if (ret_code != L_ENOMEM && gvec_push_back(t, &token) == GVEC_ENOMEM)
-            ret_code = L_ENOMEM;
+        if (ret_code == L_OK) {
+            // Add EOI to tokens
+            const token_t token = {.type = TT_EOI,
+                                   .word = 0,
+                                   .loc = {.index = input_len, .length = 1}};
+            if (gvec_push_back(t, &token) == GVEC_ENOMEM)
+                ret_code = L_ENOMEM;
+        }
 
-        if (ret_code == L_ENOMEM)
-            gvec_free(t);
-        else
+        if (ret_code == L_OK)
             *tokens = t;
+        else
+            gvec_free(t);
     } else
         gvec_free(t);
 
