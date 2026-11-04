@@ -85,7 +85,7 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
     } state = I_SYMBOLS;
 
     const size_t input_len = strlen(input);
-    int status = L_OK;
+    int ret_code = L_OK;
     size_t offset = 0;
 
     for (size_t i = 0; i < input_len; i++) {
@@ -94,7 +94,7 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
 
         if (INVALID_CHAR(c)) {
             set_err(err, INVALID_CHAR_ERR, i);
-            status = L_ERROR;
+            ret_code = L_ERROR;
             break;
         }
 
@@ -123,7 +123,7 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
                     // clang-format on
                     default:
                         set_err(err, NO_NUM_AFTER_POINT_ERR, i);
-                        status = L_ERROR;
+                        ret_code = L_ERROR;
                         break;
                 }
                 break;
@@ -135,14 +135,14 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
                             state = I_AFTER_POINT;
                         else {
                             set_err(err, UNEXPECTED_POINT_ERR, i);
-                            status = L_ERROR;
+                            ret_code = L_ERROR;
                         }
                         break;
                     CASE_DIGITS:
                         break;
                     default:
                         if (push_number(t, input, offset, i) == GVEC_ENOMEM) {
-                            status = L_ENOMEM;
+                            ret_code = L_ENOMEM;
                             break;
                         }
 
@@ -153,14 +153,14 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
                 break;
         }
 
-        if (status != L_OK)
+        if (ret_code != L_OK)
             break;
 
         if (token.type != TT_INVALID) {
             token.loc.index = i;
             token.loc.length = 1;
             if (gvec_push_back(t, &token) == GVEC_ENOMEM) {
-                status = L_ENOMEM;
+                ret_code = L_ENOMEM;
                 break;
             }
         }
@@ -168,26 +168,26 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
 
     if (state == I_POINT) {
         set_err(err, NO_NUM_AFTER_POINT_ERR, input_len);
-        status = L_ERROR;
+        ret_code = L_ERROR;
     }
 
-    if (status == L_OK) {
+    if (ret_code == L_OK) {
         if ((state == I_NUMBER || state == I_AFTER_POINT)
-            && push_number(t, input, offset, strlen(input)) == GVEC_ENOMEM)
-            status = L_ENOMEM;
+            && push_number(t, input, offset, input_len) == GVEC_ENOMEM)
+            ret_code = L_ENOMEM;
 
         const token_t token = {.type = TT_EOI,
                                .word = 0,
-                               .loc = {.index = strlen(input), .length = 1}};
-        if (status != L_ENOMEM && gvec_push_back(t, &token) == GVEC_ENOMEM)
-            status = L_ENOMEM;
+                               .loc = {.index = input_len, .length = 1}};
+        if (ret_code != L_ENOMEM && gvec_push_back(t, &token) == GVEC_ENOMEM)
+            ret_code = L_ENOMEM;
 
-        if (status == L_ENOMEM)
+        if (ret_code == L_ENOMEM)
             gvec_free(t);
         else
             *tokens = t;
     } else
         gvec_free(t);
 
-    return status;
+    return ret_code;
 }
