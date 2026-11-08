@@ -1,6 +1,7 @@
 CC       := gcc
 CFLAGS   := -g -fsanitize=address,undefined -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion
 DEPFLAGS := -MMD -MP
+LDFLAGS  := -lm
 
 OBJS_DIR := .objs
 DEPS_DIR := .deps
@@ -20,7 +21,7 @@ vpath %.c $(LIBS_DIR)
 all: $(BINS)
 
 $(BINS): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $@
 
 $(OBJS_DIR)/%.o: %.c | $(OBJS_DIR) $(DEPS_DIR)
 	$(CC) $(CFLAGS) -I$(LIBS_DIR) $(DEPFLAGS) -MF $(DEPS_DIR)/$*.d -c $< -o $@
