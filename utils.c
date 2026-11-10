@@ -116,13 +116,12 @@ char *format_err_msg(const char *input, err_msg_t err) {
         || strlen(err.msg) == 0)
         return NULL;
 
-    // 1 -> length of "\n"
-    const size_t first_line_len = strlen(FIRST_LINE_START) + strlen(input) + 1;
+    const size_t first_line_len =
+        strlen(FIRST_LINE_START) + strlen(input) + strlen("\n");
 
-    // 2 -> length of "^ "
-    // 1 -> length of "\0"
-    const size_t second_line_len =
-        strlen(SECOND_LINE_START) + err.loc.index + 2 + strlen(err.msg) + 1;
+    const size_t second_line_len = strlen(SECOND_LINE_START) + err.loc.index
+                                   + strlen("^ ") + strlen(err.msg)
+                                   + strlen("\0");
 
     const size_t formated_err_len = first_line_len + second_line_len;
     char *formated_err = calloc(formated_err_len, sizeof(char));
@@ -142,4 +141,13 @@ char *format_err_msg(const char *input, err_msg_t err) {
     strcat(formated_err, err.msg);
 
     return formated_err;
+}
+
+void print_err_msg(const char *input, err_msg_t err) {
+    char *const formatted_err = format_err_msg(input, err);
+    if (formatted_err == NULL)
+        return;
+
+    fprintf(stderr, "%s\n", formatted_err);
+    free(formatted_err);
 }

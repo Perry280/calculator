@@ -1,8 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
-#include "types.h"
 #include "utils.h"
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,9 +37,7 @@ static void parse(const char *input, const gvec_t *tokens) {
             fprintf(stderr, "ERROR: malloc failed.\n");
             break;
         case P_SYNERR:
-            char *temp = format_err_msg(input, err);
-            fprintf(stderr, "\n%s\n\n", temp);
-            free(temp);
+            print_err_msg(input, err);
             break;
     }
 }
@@ -49,7 +45,6 @@ static void parse(const char *input, const gvec_t *tokens) {
 static void evaluate(const char *input) {
     gvec_t *tokens = NULL;
     err_msg_t err = {0};
-    char *temp = NULL;
 
     switch (tokenize(input, &tokens, &err)) {
         case L_OK:
@@ -67,10 +62,7 @@ static void evaluate(const char *input) {
             fprintf(stderr, "ERROR: malloc failed.\n");
             break;
         case L_ERROR:
-            temp = format_err_msg(input, err);
-            fprintf(stderr, "\n%s\n\n", temp);
-            free(temp);
-            temp = NULL;
+            print_err_msg(input, err);
             break;
     }
 
