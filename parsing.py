@@ -2,14 +2,13 @@
 # e: empty string
 # $: end of input
 #
-# A0 -> U B0 A1
-# U  -> + | - | e
-# A1 -> + B0 A1 | - B0 A1 | e
-# B0 -> C0 B1
-# B1 -> * C0 B1 | / C0 B1 | e
-# C0 -> X C1
-# C1 -> ^ C0 | e
-# X  -> n | ( A0 )
+# Expr -> + Mul AddTail | - Mul AddTail | Mul AddTail
+# AddTail -> + Mul AddTail | - Mul AddTail | e
+# Mul -> Power MulTail
+# MulTail -> * Power MulTail | / Power MulTail | e
+# Power -> Term PowTail
+# PowTail -> ^ Power | e
+# Term  -> n | ( Expr )
 
 from typing import Any, override
 
@@ -195,27 +194,26 @@ def print_dict(sets: dict[Any, set[str]]) -> None:
 
 def main() -> None:
     G: Grammar = Grammar(
-        S="A0",
+        S="Expr",
         T=frozenset({"+", "-", "*", "/", "^", "(", ")", "n"}),
-        NT=frozenset({"S", "A0", "A1", "B0", "B1", "C0", "C1", "X"}),
+        NT=frozenset({"Expr", "AddTail", "Mul", "MulTail", "Power", "PowTail", "Term"}),
         P=frozenset(
             {
-                Rule("A0", ["S", "B0", "A1"]),
-                Rule("S", ["+"]),
-                Rule("S", ["-"]),
-                Rule("S", [EMPTY_STR]),
-                Rule("A1", ["+", "B0", "A1"]),
-                Rule("A1", ["-", "B0", "A1"]),
-                Rule("A1", [EMPTY_STR]),
-                Rule("B0", ["C0", "B1"]),
-                Rule("B1", ["*", "C0", "B1"]),
-                Rule("B1", ["/", "C0", "B1"]),
-                Rule("B1", [EMPTY_STR]),
-                Rule("C0", ["X", "C1"]),
-                Rule("C1", ["^", "C0"]),
-                Rule("C1", [EMPTY_STR]),
-                Rule("X", ["(", "A0", ")"]),
-                Rule("X", ["n"]),
+                Rule("Expr",    ["+", "Mul", "AddTail"]),
+                Rule("Expr",    ["-", "Mul", "AddTail"]),
+                Rule("Expr",    ["Mul", "AddTail"]),
+                Rule("AddTail", ["+", "Mul", "AddTail"]),
+                Rule("AddTail", ["-", "Mul", "AddTail"]),
+                Rule("AddTail", [EMPTY_STR]),
+                Rule("Mul",     ["Power", "MulTail"]),
+                Rule("MulTail", ["*", "Power", "MulTail"]),
+                Rule("MulTail", ["/", "Power", "MulTail"]),
+                Rule("MulTail", [EMPTY_STR]),
+                Rule("Power",   ["Term", "PowTail"]),
+                Rule("PowTail", ["^", "Power"]),
+                Rule("PowTail", [EMPTY_STR]),
+                Rule("Term",    ["(", "Expr", ")"]),
+                Rule("Term",    ["n"]),
             }
         ),
     )
