@@ -11,7 +11,7 @@ static void strcat_double(char *restrict dest, double n) {
     strcat(dest, buf);
 }
 
-static size_t compute_string_len(const gvec_t *tokens, int include_eoi) {
+static size_t compute_token_string_len(const gvec_t *tokens, int include_eoi) {
     size_t string_len = 0;
     int eoi_in_tokens = 0;
     const size_t size = gvec_size(tokens);
@@ -40,9 +40,9 @@ static size_t compute_string_len(const gvec_t *tokens, int include_eoi) {
     return string_len;
 }
 
-static char *create_string(const gvec_t *tokens,
-                           int include_eoi,
-                           size_t string_len) {
+static char *create_token_string(const gvec_t *tokens,
+                                 int include_eoi,
+                                 size_t string_len) {
     char *const string = calloc(string_len, sizeof(char));
     if (string == NULL)
         return NULL;
@@ -101,39 +101,47 @@ char *tokens_to_string(const gvec_t *tokens, int include_eoi) {
             && ((token_t *)gvec_ptr_at(tokens, 0))->type == TT_EOI))
         return NULL;
 
-    const size_t string_len = compute_string_len(tokens, include_eoi);
+    const size_t string_len = compute_token_string_len(tokens, include_eoi);
     if (string_len == 0)
         return NULL;
 
-    return create_string(tokens, include_eoi, string_len);
+    return create_token_string(tokens, include_eoi, string_len);
 }
 
-#define FIRST_LINE_START  "Input: "
-#define SECOND_LINE_START "ERROR: "
+void print_tokens(const gvec_t *tokens, int include_eoi) {
+    char *token_string = tokens_to_string(tokens, include_eoi);
+    if (token_string == NULL)
+        return;
 
-char *format_err_msg(const char *input, err_msg_t err) {
+    printf("%s\n", token_string);
+    free(token_string);
+}
+
+#define ERR_MSG_FIRST_LINE_START  "Input: "
+#define ERR_MSG_SECOND_LINE_START "ERROR: "
+
+static char *format_err_msg(const char *input, err_msg_t err) {
     if (input == NULL || err.msg == NULL || strlen(input) == 0
         || strlen(err.msg) == 0)
         return NULL;
 
     const size_t first_line_len =
-        strlen(FIRST_LINE_START) + strlen(input) + strlen("\n");
+        strlen(ERR_MSG_FIRST_LINE_START) + strlen(input) + strlen("\n");
 
-    const size_t second_line_len = strlen(SECOND_LINE_START) + err.loc.index
-                                   + strlen("^ ") + strlen(err.msg)
-                                   + strlen("\0");
+    const size_t second_line_len = strlen(ERR_MSG_SECOND_LINE_START)
+                                   + err.loc.index + strlen("^ ")
+                                   + strlen(err.msg) + 1;
 
-    const size_t formated_err_len = first_line_len + second_line_len;
-    char *formated_err = calloc(formated_err_len, sizeof(char));
+    char *formated_err = calloc(first_line_len + second_line_len, sizeof(char));
     if (formated_err == NULL)
         return NULL;
 
-    strcat(formated_err, FIRST_LINE_START);
+    strcat(formated_err, ERR_MSG_FIRST_LINE_START);
     strcat(formated_err, input);
     strcat(formated_err, "\n");
-    strcat(formated_err, SECOND_LINE_START);
+    strcat(formated_err, ERR_MSG_SECOND_LINE_START);
 
-    const size_t temp_len = first_line_len + strlen(SECOND_LINE_START);
+    const size_t temp_len = first_line_len + strlen(ERR_MSG_SECOND_LINE_START);
     for (size_t i = 0; i < err.loc.index; i++)
         formated_err[temp_len + i] = ' ';
 
@@ -150,4 +158,40 @@ void print_err_msg(const char *input, err_msg_t err) {
 
     fprintf(stderr, "%s\n", formatted_err);
     free(formatted_err);
+}
+
+#define RES_FIRST_LINE_START  "Input:  "
+#define RES_SECOND_LINE_START "Result: "
+
+static char *format_expr_res(const char *input, double expr_res) {
+    if (input == NULL || strlen(input) == 0)
+        return NULL;
+
+    const size_t first_line_len =
+        strlen(RES_FIRST_LINE_START) + strlen(input) + strlen("\n");
+
+    const size_t second_line_len = strlen(RES_SECOND_LINE_START)
+                                   + (size_t)snprintf(NULL, 0, "%g", expr_res)
+                                   + 1;
+
+    char *formated_res = calloc(first_line_len + second_line_len, sizeof(char));
+    if (formated_res == NULL)
+        return NULL;
+
+    strcat(formated_res, RES_FIRST_LINE_START);
+    strcat(formated_res, input);
+    strcat(formated_res, "\n");
+    strcat(formated_res, RES_SECOND_LINE_START);
+    strcat_double(formated_res, expr_res);
+
+    return formated_res;
+}
+
+void print_expr_res(const char *input, double expr_res) {
+    char *formated_res = format_expr_res(input, expr_res);
+    if (formated_res == NULL)
+        return;
+
+    printf("%s\n", formated_res);
+    free(formated_res);
 }
