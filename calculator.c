@@ -25,10 +25,11 @@ static char *concat_input_expression(int argc, char *argv[]) {
 }
 
 static void parse(const char *input, const gvec_t *tokens) {
+    double expr_res = 0;
     err_msg_t err = {0};
-    switch (recursive_descent_parser(tokens, &err)) {
+    switch (recursive_descent_parser(tokens, &expr_res, &err)) {
         case P_OK:
-            printf("Valid syntax.\n");
+            print_expr_res(input, expr_res);
             break;
         case P_EINVAL:
             fprintf(stderr, "ERROR: Invalid argument.\n");

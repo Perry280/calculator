@@ -76,7 +76,9 @@
  */
 
 //
-int recursive_descent_parser(const gvec_t *tokens, err_msg_t *err);
+int recursive_descent_parser(const gvec_t *tokens,
+                             double *expr_res,
+                             err_msg_t *err);
 
 /* clang-format off
  *

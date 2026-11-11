@@ -18,9 +18,13 @@ typedef struct parsing_result_s {
 } parsing_result_t;
 
 static parsing_result_t rd_Expr(gvec_iter_t *iter, token_t *token);
-static parsing_result_t rd_AddTail(gvec_iter_t *iter, token_t *token);
+static parsing_result_t rd_AddTail(gvec_iter_t *iter,
+                                   token_t *token,
+                                   double accumulator);
 static parsing_result_t rd_Mul(gvec_iter_t *iter, token_t *token);
-static parsing_result_t rd_MulTail(gvec_iter_t *iter, token_t *token);
+static parsing_result_t rd_MulTail(gvec_iter_t *iter,
+                                   token_t *token,
+                                   double accumulator);
 static parsing_result_t rd_Power(gvec_iter_t *iter, token_t *token);
 static parsing_result_t rd_PowTail(gvec_iter_t *iter, token_t *token);
 static parsing_result_t rd_Term(gvec_iter_t *iter, token_t *token);
@@ -46,7 +50,9 @@ static inline parsing_result_t set_success(double num) {
     return res;
 }
 
-int recursive_descent_parser(const gvec_t *tokens, err_msg_t *err) {
+int recursive_descent_parser(const gvec_t *tokens,
+                             double *expr_res,
+                             err_msg_t *err) {
     if (tokens == NULL || gvec_size(tokens) == 0 || err == NULL)
         return P_EINVAL;
 
@@ -65,7 +71,9 @@ int recursive_descent_parser(const gvec_t *tokens, err_msg_t *err) {
     if (res.ret_code == P_OK && token.type != TT_EOI)
         res = set_syn_err(UNEXPECTED_ERR, token.loc);
 
-    if (res.ret_code != P_OK)
+    if (res.ret_code == P_OK)
+        *expr_res = res.expr_res;
+    else
         *err = res.err;
 
     gvec_iter_free(iter);
@@ -91,27 +99,37 @@ static parsing_result_t rd_Expr(gvec_iter_t *iter, token_t *token) {
             if (is_unary_minus)
                 mul_res.expr_res = -mul_res.expr_res;
 
-            return rd_AddTail(iter, token);
+            return rd_AddTail(iter, token, mul_res.expr_res);
         default:
             return set_syn_err(EXPR_ERR, token->loc);
     }
 }
 
-static parsing_result_t rd_AddTail(gvec_iter_t *iter, token_t *token) {
+static parsing_result_t rd_AddTail(gvec_iter_t *iter,
+                                   token_t *token,
+                                   double accumulator) {
+    int is_addition = 1;
     switch (token->type) {
-        case TT_ADDITION:
         case TT_SUBTRACTION:
+            is_addition = 0;
+            // fallthrough
+        case TT_ADDITION:
             if (gvec_iter_next(iter, token) == GVEC_EITER)
                 return set_syn_err_eoi(token->loc);
 
-            const parsing_result_t res = rd_Mul(iter, token);
-            if (res.ret_code == P_SYNERR)
-                return res;
+            const parsing_result_t mul_res = rd_Mul(iter, token);
+            if (mul_res.ret_code == P_SYNERR)
+                return mul_res;
 
-            return rd_AddTail(iter, token);
+            if (is_addition)
+                accumulator += mul_res.expr_res;
+            else
+                accumulator -= mul_res.expr_res;
+
+            return rd_AddTail(iter, token, accumulator);
         case TT_EOI:
         case TT_CLOSE_PARENTHESIS:
-            return set_success(0);
+            return set_success(accumulator);
         default:
             return set_syn_err(ADDTAIL_ERR, token->loc);
     }
@@ -121,33 +139,43 @@ static parsing_result_t rd_Mul(gvec_iter_t *iter, token_t *token) {
     switch (token->type) {
         case TT_OPEN_PARENTHESIS:
         case TT_NUMBER:
-            const parsing_result_t res = rd_Power(iter, token);
-            if (res.ret_code == P_SYNERR)
-                return res;
+            const parsing_result_t power_res = rd_Power(iter, token);
+            if (power_res.ret_code == P_SYNERR)
+                return power_res;
 
-            return rd_MulTail(iter, token);
+            return rd_MulTail(iter, token, power_res.expr_res);
         default:
             return set_syn_err(OPERAND_ERR, token->loc);
     }
 }
 
-static parsing_result_t rd_MulTail(gvec_iter_t *iter, token_t *token) {
+static parsing_result_t rd_MulTail(gvec_iter_t *iter,
+                                   token_t *token,
+                                   double accumulator) {
+    int is_multiplication = 1;
     switch (token->type) {
-        case TT_MULTIPLICATION:
         case TT_DIVISION:
+            is_multiplication = 0;
+            // fallthrough
+        case TT_MULTIPLICATION:
             if (gvec_iter_next(iter, token) == GVEC_EITER)
                 return set_syn_err_eoi(token->loc);
 
-            const parsing_result_t res = rd_Power(iter, token);
-            if (res.ret_code == P_SYNERR)
-                return res;
+            const parsing_result_t power_res = rd_Power(iter, token);
+            if (power_res.ret_code == P_SYNERR)
+                return power_res;
 
-            return rd_MulTail(iter, token);
+            if (is_multiplication)
+                accumulator *= power_res.expr_res;
+            else
+                accumulator /= power_res.expr_res;
+
+            return rd_MulTail(iter, token, accumulator);
         case TT_EOI:
         case TT_CLOSE_PARENTHESIS:
         case TT_ADDITION:
         case TT_SUBTRACTION:
-            return set_success(0);
+            return set_success(accumulator);
         default:
             return set_syn_err(MULTAIL_ERR, token->loc);
     }
@@ -157,7 +185,7 @@ static parsing_result_t rd_Power(gvec_iter_t *iter, token_t *token) {
     switch (token->type) {
         case TT_OPEN_PARENTHESIS:
         case TT_NUMBER:
-            parsing_result_t term_res = rd_Term(iter, token);
+            const parsing_result_t term_res = rd_Term(iter, token);
             if (term_res.ret_code == P_SYNERR)
                 return term_res;
 
@@ -165,8 +193,7 @@ static parsing_result_t rd_Power(gvec_iter_t *iter, token_t *token) {
             if (powtail_res.ret_code == P_SYNERR)
                 return powtail_res;
 
-            term_res.expr_res = pow(term_res.expr_res, powtail_res.expr_res);
-            return term_res;
+            return set_success(pow(term_res.expr_res, powtail_res.expr_res));
         default:
             return set_syn_err(OPERAND_ERR, token->loc);
     }
