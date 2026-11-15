@@ -184,9 +184,10 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
                 ret_code = L_ENOMEM;
         }
 
-        if (ret_code == L_OK)
+        if (ret_code == L_OK) {
+            gvec_shrink_to_fit(t);
             *tokens = t;
-        else
+        } else
             gvec_free(t);
     } else
         gvec_free(t);
