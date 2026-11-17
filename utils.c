@@ -12,39 +12,40 @@ static void strcat_double(char *restrict dest, double n) {
 }
 
 static size_t compute_token_string_len(const gvec_t *tokens, int include_eoi) {
-    size_t string_len = 0;
+    size_t token_string_len = 0;
     int eoi_in_tokens = 0;
     const size_t size = gvec_size(tokens);
     const token_t *const arr = (const token_t *)gvec_array(tokens);
     for (size_t i = 0; i < size; i++) {
         switch (arr[i].type) {
             case TT_INVALID:
-                string_len += strlen("INVALID");
+                token_string_len += strlen("INVALID");
                 break;
             case TT_NUMBER:
-                string_len += (size_t)snprintf(NULL, 0, "%g", arr[i].word);
+                token_string_len +=
+                    (size_t)snprintf(NULL, 0, "%g", arr[i].word);
                 break;
             case TT_EOI:
                 eoi_in_tokens = 1;
-                string_len++;
+                token_string_len++;
                 break;
             default:
-                string_len++;
+                token_string_len++;
                 break;
         }
     }
 
     // Add enough space for white spaces between the tokens
-    string_len += size - (size_t)(eoi_in_tokens * (include_eoi == 0)) * 2;
+    token_string_len += size - (size_t)(eoi_in_tokens * (include_eoi == 0)) * 2;
 
-    return string_len;
+    return token_string_len;
 }
 
 static char *create_token_string(const gvec_t *tokens,
                                  int include_eoi,
                                  size_t string_len) {
-    char *const string = calloc(string_len, sizeof(char));
-    if (string == NULL)
+    char *const token_string = calloc(string_len, sizeof(char));
+    if (token_string == NULL)
         return NULL;
 
     const size_t size = gvec_size(tokens);
@@ -77,7 +78,7 @@ static char *create_token_string(const gvec_t *tokens,
                 symbol = "^";
                 break;
             case TT_NUMBER:
-                strcat_double(string, arr[i].word);
+                strcat_double(token_string, arr[i].word);
                 break;
             case TT_EOI:
                 if (include_eoi)
@@ -86,13 +87,13 @@ static char *create_token_string(const gvec_t *tokens,
         }
 
         if (symbol != NULL)
-            strcat(string, symbol);
+            strcat(token_string, symbol);
 
         if (i < size - 1)
-            strcat(string, " ");
+            strcat(token_string, " ");
     }
 
-    return string;
+    return token_string;
 }
 
 char *tokens_to_string(const gvec_t *tokens, int include_eoi) {
@@ -101,11 +102,12 @@ char *tokens_to_string(const gvec_t *tokens, int include_eoi) {
             && ((token_t *)gvec_ptr_at(tokens, 0))->type == TT_EOI))
         return NULL;
 
-    const size_t string_len = compute_token_string_len(tokens, include_eoi);
-    if (string_len == 0)
+    const size_t token_string_len =
+        compute_token_string_len(tokens, include_eoi);
+    if (token_string_len == 0)
         return NULL;
 
-    return create_token_string(tokens, include_eoi, string_len);
+    return create_token_string(tokens, include_eoi, token_string_len);
 }
 
 void print_tokens(const gvec_t *tokens, int include_eoi) {
