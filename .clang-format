@@ -2,6 +2,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 
 AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
 AlignConsecutiveMacros:
   Enabled: true
   AcrossEmptyLines: false
@@ -15,7 +16,7 @@ AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: true
-# BinPackParameters: OnePerLine
+BinPackParameters: OnePerLine
 BreakAfterOpenBracketFunction: false
 BreakAfterReturnType: Automatic
 BreakBeforeBinaryOperators: NonAssignment
@@ -28,4 +29,5 @@ PackArguments:
 PackParameters:
   BinPack: OnePerLine
 
+PenaltyBreakAssignment: 1000
 PenaltyReturnTypeOnItsOwnLine: 1000
