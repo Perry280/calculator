@@ -35,7 +35,7 @@ static int push_number(gvec_t *tokens,
                        size_t word_end) {
     const token_t token = {
         .type = TT_NUMBER,
-        .word = strtod(input + offset, NULL),
+        .word = strtod(input + offset, nullptr),
         .loc = {.index = offset, .length = word_end - offset}};
     return gvec_push_back(tokens, &token);
 }
@@ -70,11 +70,11 @@ static inline void set_err(err_msg_t *err, const char *err_msg, size_t index) {
 }
 
 int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
-    if (input == NULL || strlen(input) == 0 || err == NULL)
+    if (input == nullptr || strlen(input) == 0 || err == nullptr)
         return L_EINVAL;
 
-    gvec_t *t = gvec_create(sizeof(token_t), token_type_cmp, NULL);
-    if (t == NULL)
+    gvec_t *t = gvec_create(sizeof(token_t), token_type_cmp, nullptr);
+    if (t == nullptr)
         return L_ENOMEM;
 
     enum input_state {

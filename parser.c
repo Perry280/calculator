@@ -53,7 +53,7 @@ static inline parsing_result_t set_success(double num) {
 int recursive_descent_parser(const gvec_t *tokens,
                              double *expr_res,
                              err_msg_t *err) {
-    if (tokens == NULL || gvec_size(tokens) == 0 || err == NULL)
+    if (tokens == nullptr || gvec_size(tokens) == 0 || err == nullptr)
         return P_EINVAL;
 
     if (gvec_size(tokens) == 1
@@ -61,7 +61,7 @@ int recursive_descent_parser(const gvec_t *tokens,
         return P_OK;
 
     gvec_iter_t *iter = gvec_iter_create(tokens);
-    if (iter == NULL)
+    if (iter == nullptr)
         return P_ENOMEM;
 
     token_t token = {0};

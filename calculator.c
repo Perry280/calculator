@@ -44,7 +44,7 @@ static void parse(const char *input, const gvec_t *tokens) {
 }
 
 static void evaluate(const char *input) {
-    gvec_t *tokens = NULL;
+    gvec_t *tokens = nullptr;
     err_msg_t err = {0};
 
     switch (tokenize(input, &tokens, &err)) {
@@ -52,7 +52,7 @@ static void evaluate(const char *input) {
             // temp = tokens_to_string(tokens, 1);
             // printf("Tokens: %s\n", temp);
             // free(temp);
-            // temp = NULL;
+            // temp = nullptr;
 
             parse(input, tokens);
             break;
