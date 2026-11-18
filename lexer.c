@@ -141,7 +141,7 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
                     CASE_DIGITS:
                         break;
                     default:
-                        if (push_number(t, input, offset, i) == GVEC_ENOMEM) {
+                        if (push_number(t, input, offset, i) == G_ENOMEM) {
                             ret_code = L_ENOMEM;
                             break;
                         }
@@ -159,7 +159,7 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
         if (token.type != TT_INVALID) {
             token.loc.index = i;
             token.loc.length = 1;
-            if (gvec_push_back(t, &token) == GVEC_ENOMEM) {
+            if (gvec_push_back(t, &token) == G_ENOMEM) {
                 ret_code = L_ENOMEM;
                 break;
             }
@@ -172,7 +172,7 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
             set_err(err, NO_NUM_AFTER_POINT_ERR, input_len);
             ret_code = L_ERROR;
         } else if ((state == I_NUMBER || state == I_AFTER_POINT)
-                   && push_number(t, input, offset, input_len) == GVEC_ENOMEM)
+                   && push_number(t, input, offset, input_len) == G_ENOMEM)
             ret_code = L_ENOMEM;
 
         if (ret_code == L_OK) {
@@ -180,7 +180,7 @@ int tokenize(const char *input, gvec_t **tokens, err_msg_t *err) {
             const token_t token = {.type = TT_EOI,
                                    .word = 0,
                                    .loc = {.index = input_len, .length = 1}};
-            if (gvec_push_back(t, &token) == GVEC_ENOMEM)
+            if (gvec_push_back(t, &token) == G_ENOMEM)
                 ret_code = L_ENOMEM;
         }
 

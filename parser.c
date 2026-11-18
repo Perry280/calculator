@@ -87,7 +87,7 @@ static parsing_result_t rd_Expr(gvec_iter_t *iter, token_t *token) {
             is_unary_minus = 1;
             // fallthrough
         case TT_ADDITION:
-            if (gvec_iter_next(iter, token) == GVEC_EITER)
+            if (gvec_iter_next(iter, token) == G_EITER)
                 return set_syn_err_eoi(token->loc);
             // fallthrough
         case TT_OPEN_PARENTHESIS:
@@ -114,7 +114,7 @@ static parsing_result_t rd_AddTail(gvec_iter_t *iter,
             is_addition = 0;
             // fallthrough
         case TT_ADDITION:
-            if (gvec_iter_next(iter, token) == GVEC_EITER)
+            if (gvec_iter_next(iter, token) == G_EITER)
                 return set_syn_err_eoi(token->loc);
 
             const parsing_result_t mul_res = rd_Mul(iter, token);
@@ -158,7 +158,7 @@ static parsing_result_t rd_MulTail(gvec_iter_t *iter,
             is_multiplication = 0;
             // fallthrough
         case TT_MULTIPLICATION:
-            if (gvec_iter_next(iter, token) == GVEC_EITER)
+            if (gvec_iter_next(iter, token) == G_EITER)
                 return set_syn_err_eoi(token->loc);
 
             const parsing_result_t power_res = rd_Power(iter, token);
@@ -202,7 +202,7 @@ static parsing_result_t rd_Power(gvec_iter_t *iter, token_t *token) {
 static parsing_result_t rd_PowTail(gvec_iter_t *iter, token_t *token) {
     switch (token->type) {
         case TT_POWER:
-            if (gvec_iter_next(iter, token) == GVEC_EITER)
+            if (gvec_iter_next(iter, token) == G_EITER)
                 return set_syn_err_eoi(token->loc);
 
             return rd_Power(iter, token);
@@ -221,7 +221,7 @@ static parsing_result_t rd_PowTail(gvec_iter_t *iter, token_t *token) {
 static parsing_result_t rd_Term(gvec_iter_t *iter, token_t *token) {
     switch (token->type) {
         case TT_OPEN_PARENTHESIS:
-            if (gvec_iter_next(iter, token) == GVEC_EITER)
+            if (gvec_iter_next(iter, token) == G_EITER)
                 return set_syn_err_eoi(token->loc);
 
             const parsing_result_t expr_res = rd_Expr(iter, token);
@@ -231,13 +231,13 @@ static parsing_result_t rd_Term(gvec_iter_t *iter, token_t *token) {
             if (token->type != TT_CLOSE_PARENTHESIS)
                 return set_syn_err(TERM_ERR, token->loc);
 
-            if (gvec_iter_next(iter, token) == GVEC_EITER)
+            if (gvec_iter_next(iter, token) == G_EITER)
                 return set_syn_err_eoi(token->loc);
 
             return expr_res;
         case TT_NUMBER:
             const double word = token->word;
-            if (gvec_iter_next(iter, token) == GVEC_EITER)
+            if (gvec_iter_next(iter, token) == G_EITER)
                 return set_syn_err_eoi(token->loc);
 
             return set_success(word);
